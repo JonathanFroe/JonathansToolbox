@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="de">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Korrekturhilfe</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                padding: 20px;
+                max-width: 600px;
+            }
+            h1 {
+                font-size: 1.5em;
+            }
+            label {
+                display: block;
+                margin-bottom: 8px;
+            }
+            textarea {
+                width: 100%;
+                height: 100px;
+                margin-top: 10px;
+            }
+            button {
+                margin-top: 20px;
+                padding: 10px 20px;
+                font-size: 1em;
+            }
+            .multiplechecks {
+                display: inline-block!;
+                margin-right: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Korrekturhilfe</h1>
+        <h2>Erhaltene punkte <span id="punkte"> </span></h2>
+
+        <form id="bewertungForm">
+            <label>Aufgabe 1</label>
+            <label><input type="checkbox" class="includenext withheader" /><input type="checkbox" class="" />Kriterium 1 & Kriterium 2</label>
+
+            <label>Aufgabe 2</label>
+            <label><input type="checkbox" class="withheader" />Kriterium 3</label>
+            <!--Example for multiple Points-->
+            <!--label><input type="checkbox" class="includenext" /><input type="checkbox" /> /2 für das Berechnen vom geometrischen Mittelwert</label-->
+
+            <!--Example for Header-->
+            <!--label>Anzahl der Wörter</label-->
+            <!--label><input type="checkbox" class="withheader" /> Für die Initalisierung eines Wertes n\_woerter = 0</label-->
+        </form>
+
+        <h2>Kommentar (optional):</h2>
+        <textarea id="kommentar" placeholder="Zusätzliche Anmerkungen ..."></textarea>
+
+        <button onclick="kopiereBewertung()">Ausgewählte Punkte kopieren</button>
+        <button id="clearButton">Formular zurücksetzen</button>
+        <button id="setAllChecks">Alle Hacken setzen</button>
+
+        <textarea id="bewertungsschema" placeholder="Hier Bewertungsschema eingeben"></textarea>
+
+        <!-- Place this above or below the Bewertungsschema textarea -->
+        <div style="margin-bottom: 1em; background: #eef; padding: 1em; border-radius: 6px">
+            <strong>Hinweis zum Bewertungsschema:</strong><br />
+            Geben Sie das Bewertungsschema zeilenweise ein. <br />
+            Jede Zeile mit <code>[ ]</code> erzeugt eine Checkbox. <br />
+            Mehrere <code>[ ]</code> in einer Zeile erzeugen mehrere Checkboxen in einer Zeile. Zeilen ohne <code>[ ]</code> werden als Überschrift oder Abschnittstrenner angezeigt (nur max eine Zeile als Überschrift oder Abschnittstrenner erlaubt). <br />
+            Beispiel:<br />
+            <pre style="background: #fff; border: 1px solid #ccc; padding: 0.5em">
+Aufgabe 1
+[ ]  [ ] Kriterium 1 & Kriterium 2
+Aufgabe 2
+[ ] Kriterium 3
+  </pre
+            >
+            <ul style="margin: 0.5em 0 0 1.5em">
+                <li>Checkboxen können einzeln angeklickt werden.</li>
+                <li>Abschnittsüberschriften helfen bei der Gliederung.</li>
+                <li>Die Punkte werden automatisch gezählt.</li>
+            </ul>
+        </div>
+
+        <script>
+            function kopiereBewertung() {
+                const form = document.getElementById("bewertungForm");
+                const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+                const labels = form.querySelectorAll("label");
+
+                let ausgabe = "";
+                labelindex = 0;
+                checkboxes.forEach((cb, index) => {
+                    const mark = cb.checked ? "☑" : "☐";
+                    if (cb.classList.contains("withheader")) {
+                        const textlabel = labels[labelindex].innerText.trim();
+                        ausgabe += `\n${textlabel}\n`;
+                        labelindex += 1;
+                    }
+                    if (!cb.classList.contains("includenext")) {
+                        const text = labels[labelindex].innerText.trim();
+                        ausgabe += `${mark} ${text}\n`;
+                        labelindex += 1;
+                    } else {
+                        ausgabe += `${mark} `;
+                    }
+                });
+
+                const kommentar = document.getElementById("kommentar").value.trim();
+                if (kommentar) {
+                    ausgabe += `\nKommentar:\n${kommentar}`;
+                }
+                ausgabe = ausgabe
+                    .split("\n")
+                    .map((line) => line.trim())
+                    .filter((line) => line.length > 0)
+                    .join("\n");
+
+                navigator.clipboard
+                    .writeText(ausgabe)
+                    .then(() => {
+                        const body = document.querySelectorAll("body");
+                        body.forEach((cb) => {
+                            cb.style.backgroundColor = "#b6fcb6";
+                        });
+                        setTimeout(() => {
+                            body.forEach((cb) => {
+                                cb.style.backgroundColor = "";
+                            });
+                        }, 2000);
+                    })
+                    .catch((err) => alert("Fehler beim Kopieren: " + err));
+            }
+            document.getElementById("bewertungForm").addEventListener("change", () => {
+                const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+                let punkte = 0;
+
+                checkboxes.forEach((cb) => {
+                    if (cb.checked) {
+                        punkte++;
+                    }
+                });
+
+                document.getElementById("punkte").textContent = punkte;
+            });
+
+            document.getElementById("bewertungsschema").addEventListener("input", () => {
+                const schema = document.getElementById("bewertungsschema").value;
+                const lines = schema.split("\n");
+                includeheader = false;
+                const form = document.getElementById("bewertungForm");
+                form.innerHTML = "";
+                lines.forEach((line) => {
+                    const matches = [...line.matchAll(/\[(.*?)\]/g)];
+                    if (matches.length > 0) {
+                        const label = document.createElement("label");
+                        // Remove all [ ] from line to get the label text
+                        const labelText = line.replace(/\[(.*?)\]/g, "").trim();
+                        // For each [ ] found, create a checkbox
+                        matches.forEach((match, i) => {
+                            const checkbox = document.createElement("input");
+                            checkbox.type = "checkbox";
+                            if (includeheader) {
+                                checkbox.classList.add("withheader");
+                                includeheader = false;
+                            }
+                            // Only the last checkbox gets the label text, others are empty
+                            if (i !== matches.length - 1) {
+                                checkbox.classList.add("addnext");
+                            }
+                            label.appendChild(checkbox);
+                        });
+                        label.appendChild(document.createTextNode(" " + labelText));
+                        form.appendChild(label);
+                    } else {
+                        const label = document.createElement("label");
+                        label.appendChild(document.createTextNode(line));
+                        form.appendChild(label);
+                        includeheader = true;
+                    }
+                });
+                document.getElementById("punkte").textContent = 0;
+            });
+
+            document.getElementById("clearButton").addEventListener("click", () => {
+                const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+                const kommentar = document.getElementById("kommentar");
+
+                checkboxes.forEach((cb) => {
+                    cb.checked = false;
+                });
+
+                kommentar.value = "";
+                document.getElementById("punkte").textContent = 0;
+            });
+
+            document.getElementById("setAllChecks").addEventListener("click", () => {
+                const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+
+                checkboxes.forEach((cb) => {
+                    cb.checked = true;
+                });
+                document.getElementById("bewertungForm").dispatchEvent(new Event("change"));
+            });
+        </script>
+    </body>
+</html>
