@@ -11,7 +11,7 @@ import re
 
 print("Input Cookie immichaccesstoken")
 dryrun = False
-withInterventionUI = False
+withInterventionUI = input("Enable Intervention UI? (y/n): ").strip().lower() == "y"
 immichaccesstoken = input("immichaccesstoken=")
 
 url = "https://photos.froehlich.plus/api/duplicates"
