@@ -150,11 +150,19 @@ for index, row in df.iterrows():
         dupimageinfos.append(imginfo)
     bestimgdf = pd.DataFrame(dupimageinfos)
     imagestodelete = []
+    ifrawtrueshift = 0
     for indexsortedimg, sortedimg, in bestimgdf.sort_values(by=['megapixel', 'date', 'namepenalty', 'filesize', 'time'], ascending=[False,True,False,False,True]).iterrows():
         if (withInterventionUI):
             imgframe = create_image_frame(scrollable_frame, sortedimg, headers)
             imgframe.pack(side=tk.LEFT, padx=10, pady=10)
-        if (indexsortedimg != 0): imagestodelete.append(sortedimg.id)
+        # Exclude RAW filetypes (e.g., .CR2, .NEF, .ARW, .RAF, .RW2, .ORF, .SR2, .DNG, .RAW)
+        raw_extensions = {'.cr2', '.nef', '.arw', '.raf', '.rw2', '.orf', '.sr2', '.dng', '.raw'}
+        filename_lower = sortedimg['name'].lower()
+        is_raw = any(filename_lower.endswith(ext) for ext in raw_extensions)
+        if is_raw:
+            ifrawtrueshift += 1
+        if (indexsortedimg-ifrawtrueshift > 0) and (not is_raw):
+            imagestodelete.append(sortedimg.id)
     
     if (withInterventionUI):
         # Create a frame for buttons below the scrollable content
